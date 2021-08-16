@@ -1,2 +1,1 @@
-# sfazinfra
-Azure Infrastructure code for Snowflake
+#Azure Infrastructure code for Snowflake
