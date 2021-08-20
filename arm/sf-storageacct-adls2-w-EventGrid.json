@@ -1,0 +1,132 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string"
+        },
+        "accountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS"
+        },
+        "kind": {
+            "type": "string",
+            "defaultValue": "StorageV2"
+        },
+        "accessTier": {
+            "type": "string",
+            "defaultValue": "Hot"
+        },
+        "minimumTlsVersion": {
+            "type": "string",
+            "defaultValue": "TLS1_2"
+        },
+        "supportsHttpsTrafficOnly": {
+            "type": "bool",
+            "defaultValue": true
+        },
+        "allowBlobPublicAccess": {
+            "type": "bool",
+            "defaultValue": false
+        },
+        "allowSharedKeyAccess": {
+            "type": "bool",
+            "defaultValue": true
+        },
+        "containerName": {
+            "type": "string"
+        },
+        "queueName": {
+            "type": "string"
+        },
+        "eventGridTopicName": {
+            "type": "string"
+        },
+        "eventSubName": {
+            "type": "string"
+        }
+        
+    },
+    "variables": {},
+    "resources": [
+        
+        {
+            "name": "[parameters('storageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "[parameters('accountType')]"
+            },
+            "kind": "[parameters('kind')]",
+            "properties": {
+                "accessTier": "[parameters('accessTier')]",
+                "minimumTlsVersion": "[parameters('minimumTlsVersion')]",
+                "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]",
+                "allowBlobPublicAccess": "[parameters('allowBlobPublicAccess')]",
+                "allowSharedKeyAccess": "[parameters('allowSharedKeyAccess')]",
+                "isHnsEnabled": true,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Allow"
+                    }
+            },
+            "resources": [
+                {
+                    "type": "blobServices/containers",
+                    "apiVersion": "2019-06-01",
+                    "name": "[concat('default/', parameters('containerName'))]",
+                    "dependsOn": [
+                        "[parameters('storageAccountName')]"
+                    ]
+                },
+                {
+                    "type": "queueServices/queues",
+                    "apiVersion": "2019-06-01",
+                    "name": "[concat('default/', parameters('queueName'))]",
+                    "dependsOn": [
+                        "[parameters('storageAccountName')]"
+                    ]
+                }
+                
+            ]
+        },
+    {
+            "type": "Microsoft.EventGrid/SystemTopics",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[parameters('eventGridTopicName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[parameters('storageAccountName')]"
+            ],
+            "properties": {
+                "source": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                "topicType": "Microsoft.Storage.StorageAccounts"
+            }
+        },
+        {
+            "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[concat(parameters('eventGridTopicName'), '/', parameters('eventSubName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventGrid/SystemTopics', parameters('eventGridTopicName'))]"
+            ],
+            "properties": {
+                "destination": {
+                    "properties": {
+                        "resourceId": "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccountName'))]",
+                        "queueName": "[parameters('queueName')]"
+                    },
+                    "endpointType": "StorageQueue"
+                },
+                "filter": {
+                    "includedEventTypes": [
+                        "Microsoft.Storage.BlobCreated",
+                        "Microsoft.Storage.BlobDeleted"
+                    ]
+                }
+            }
+        }
+        
+    ]
+}

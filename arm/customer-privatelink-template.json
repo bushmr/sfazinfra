@@ -1,0 +1,83 @@
+{
+  "$schema" : "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion" : "1.0.0.0",
+  "parameters" : {
+    "location" : {
+      "type" : "string",
+      "defaultValue" : "[resourceGroup().location]",
+      "metadata" : {
+        "description" : "Location for all resources."
+      }
+    },
+    "virtualNetworkName" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Name of Customer VNet hosting Privatelink Endpoint"
+      }
+    },
+    "privatelinkEndpointSubnetName" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Name of the subnet hosting the Privatelink Endpoint(preferbly a separate subnet). Please refer to Snowflake docs for more info"
+      }
+    },
+    "privatelinkEndpointSubnetCIDR" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "CIDR for Subnet hosting Privatelink Endpoint ex: 10.1.2.0/24. "
+      }
+    },
+    "customerName" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Name of Customer"
+      }
+    },
+    "snowflakePrivatelinkServiceAlias" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Snowflake Privatelink Service Alias in eastus2 region (already specified in parameters file)"
+      }
+    }
+  },
+  "variables" : {
+    "PrivatelinkEndpointSubnetNameRef" : "[concat(parameters('virtualNetworkName'), '/', parameters('privatelinkEndpointSubnetName'))]",
+    "PrivatelinkEndpointSubnetIdRef" : "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('privatelinkEndpointSubnetName'))]"
+  },
+  "resources" : [
+    {
+      "apiVersion" : "2018-04-01",
+      "type" : "Microsoft.Network/virtualNetworks/subnets",
+      "name" : "[variables('PrivatelinkEndpointSubnetNameRef')]",
+      "location" : "[parameters('location')]",
+      "properties" : {
+        "addressPrefix" : "[concat(parameters('privatelinkEndpointSubnetCIDR'))]",
+        "privateLinkServiceNetworkPolicies" : "Disabled",
+        "privateEndpointNetworkPolicies" : "Disabled"
+      }
+    },
+    {
+      "dependsOn" : [
+        "[variables('PrivatelinkEndpointSubnetIdRef')]"
+      ],
+      "apiVersion" : "2020-05-01",
+      "type" : "Microsoft.Network/privateEndpoints",
+      "name" : "[concat('SnowflakeprivatelinkEndpoint-',parameters('customerName'))]",
+      "location" : "[parameters('location')]",
+      "properties" : {
+        "manualPrivateLinkServiceConnections" : [
+          {
+            "name" : "{plsConnection}",
+            "properties" : {
+              "privateLinkServiceId" : "[parameters('snowflakePrivatelinkServiceAlias')]",
+              "requestMessage" : "Please approve my connection, thanks."
+            }
+          }
+        ],
+        "subnet" : {
+          "id" : "[variables('PrivatelinkEndpointSubnetIdRef')]"
+        }
+      }
+    }
+  ]
+}

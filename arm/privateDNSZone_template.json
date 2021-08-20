@@ -1,0 +1,72 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "ZoneName": {
+            "type": "string",
+            "allowedValues": [
+                "west-us-2.privatelink.snowflakecomputing.com",
+                "east-us-2.privatelink.snowflakecomputing.com"
+            ],
+            "defaultValue": "west-us-2.privatelink.snowflakecomputing.com",
+            "metadata": {
+                "description": "Select the Snowflake privatelink DNS zone"
+            }
+        },
+        "PrivateLinkIP": {
+            "type": "string",
+            "metadata": {
+                "description": "This is the private IP of your private endpoint"
+            }
+        },
+        "sfCustomerID": {
+            "type": "string", 
+            "metadata": {
+                "description": "Enter your Snowflake AccountID - host portion of your Account URL (ex. qd34532)"
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-09-01",
+            "type": "Microsoft.Network/privateDnsZones",
+            "name": "[parameters('Zonename')]",
+            "location": "global",
+            "dependsOn": [],
+            "tags": {},
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/A",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('ZoneName'), '/ocsp.', parameters('sfCustomerID'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('ZoneName'))]"
+            ],
+            "properties": {
+                "ttl": 3600,
+                "aRecords": [
+                    {
+                        "ipv4Address": "[parameters('PrivateLinkIP')]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/A",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('ZoneName'), '/', parameters('sfCustomerID'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('ZoneName'))]"
+            ],
+            "properties": {
+                "ttl": 3600,
+                "aRecords": [
+                    {
+                        "ipv4Address": "[parameters('PrivateLinkIP')]"
+                    }
+                ]
+            }
+        }
+    ]
+}

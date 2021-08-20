@@ -1,0 +1,24 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2019-02-01/deploymentParameters.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+    "customerName":{
+        "value" : "Sirius"
+    },
+    "virtualNetworkName":{
+        "value" : "sf-vnet-001-vn"
+    },
+    "vNetResourceGroup":{
+        "value" : "sf-hub-001-rg"
+    },
+    "privatelinkEndpointSubnetName":{
+        "value" : "prvlk-endpoint-sn"
+    },
+    "privatelinkEndpointSubnetCIDR":{
+        "value" : "10.140.0.16/28"
+    },
+    "snowflakePrivatelinkServiceAlias":{
+        "value" : "sf-pvlinksvc-azwestus2.7583086f-d856-40b9-9731-d9a96b663bd6.westus2.azure.privatelinkservice"
+    }
+  }
+}

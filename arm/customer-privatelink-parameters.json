@@ -1,0 +1,21 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+    "customerName":{
+        "value" : "sf-scs"
+    },
+    "virtualNetworkName":{
+        "value" : "sf-vnet-001-vn"
+    },
+    "privatelinkEndpointSubnetName":{
+        "value" : "prvlk-endpoint-sn"
+    },
+    "privatelinkEndpointSubnetCIDR":{
+        "value" : "10.140.0.16/28"
+    },
+    "snowflakePrivatelinkServiceAlias":{
+        "value" : "sf-pvlinksvc-azwestus2.7583086f-d856-40b9-9731-d9a96b663bd6.westus2.azure.privatelinkservice"
+    }
+  }
+}
